@@ -160,7 +160,7 @@ func InstallCoreDNS(rawClient kubernetes.RawClientInterface, region string, wait
 }
 
 // UpdateCoreDNSImageTag updates image tag for kube-system:deployment/coredns based to match the latest release
-func UpdateCoreDNSImageTag(clientSet k8s.Interface, dryRun bool) error {
+func UpdateCoreDNSImageTag(clientSet k8s.Interface, plan bool) error {
 	printer := printers.NewJSONPrinter()
 
 	d, err := clientSet.AppsV1().Deployments(metav1.NamespaceSystem).Get(CoreDNS, metav1.GetOptions{})
@@ -192,7 +192,7 @@ func UpdateCoreDNSImageTag(clientSet k8s.Interface, dryRun bool) error {
 		return nil
 	}
 
-	if dryRun {
+	if plan {
 		logger.Critical("%q is not up-to-date", CoreDNS)
 		return nil
 	}

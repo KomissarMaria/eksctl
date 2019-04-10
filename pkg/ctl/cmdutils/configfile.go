@@ -268,3 +268,51 @@ func NewCreateNodeGroupLoader(provider *api.ProviderConfig, spec *api.ClusterCon
 
 	return l
 }
+
+// NewDeleteNodeGroupLoader will laod config or use flags for 'eksctl delete nodegroup'
+func NewDeleteNodeGroupLoader(provider *api.ProviderConfig, spec *api.ClusterConfig, ng *api.NodeGroup, clusterConfigFile, nameArg string, cmd *cobra.Command, ngFilter *NodeGroupFilter, include, exclude []string) ClusterConfigLoader {
+	l := newCommonClusterConfigLoader(provider, spec, clusterConfigFile, cmd)
+
+	l.nameArg = nameArg
+
+	l.flagsIncompatibleWithConfigFile.Insert(
+		"cluster",
+	)
+
+	l.validateWithConfigFile = func() error {
+		return ngFilter.AppendGlobs(include, exclude, spec.NodeGroups)
+	}
+
+	l.flagsIncompatibleWithoutConfigFile.Insert(
+		"only",
+		"include",
+		"exclude",
+		"only-missing",
+		"dry-run",
+		"approve",
+	)
+
+	l.validateWithoutConfigFile = func() error {
+		if l.spec.Metadata.Name == "" {
+			return ErrMustBeSet("--cluster")
+		}
+
+		if ng.Name != "" && nameArg != "" {
+			return ErrNameFlagAndArg(ng.Name, nameArg)
+		}
+
+		if nameArg != "" {
+			ng.Name = nameArg
+		}
+
+		if ng.Name == "" {
+			return ErrMustBeSet("--name")
+		}
+
+		ngFilter.AppendIncludeNames(ng.Name)
+
+		return nil
+	}
+
+	return l
+}

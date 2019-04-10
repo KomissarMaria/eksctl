@@ -20,7 +20,7 @@ const (
 )
 
 // UpdateKubeProxyImageTag updates image tag for kube-system:damoneset/kube-proxy based to match controlPlaneVersion
-func UpdateKubeProxyImageTag(clientSet kubernetes.Interface, controlPlaneVersion string, dryRun bool) error {
+func UpdateKubeProxyImageTag(clientSet kubernetes.Interface, controlPlaneVersion string, plan bool) error {
 	printer := printers.NewJSONPrinter()
 
 	d, err := clientSet.AppsV1().DaemonSets(metav1.NamespaceSystem).Get(KubeProxy, metav1.GetOptions{})
@@ -54,8 +54,8 @@ func UpdateKubeProxyImageTag(clientSet kubernetes.Interface, controlPlaneVersion
 		return nil
 	}
 
-	if dryRun {
-		logger.Critical("%q is not up-to-date", KubeProxy)
+	if plan {
+		logger.Critical("(plan) %q is not up-to-date", KubeProxy)
 		return nil
 	}
 

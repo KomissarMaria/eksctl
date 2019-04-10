@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kris-nova/logger"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha4"
 	"github.com/weaveworks/eksctl/pkg/utils/kubeconfig"
@@ -15,21 +16,42 @@ import (
 const IncompatibleFlags = "cannot be used at the same time"
 
 // LogIntendedAction calls logger.Info with appropriate prefix
-func LogIntendedAction(dryRun bool, msgFmt string, args ...interface{}) {
+func LogIntendedAction(plan bool, msgFmt string, args ...interface{}) {
 	prefix := "will "
-	if dryRun {
-		prefix = "(dry-run) would "
+	if plan {
+		prefix = "(plan) would "
 	}
 	logger.Info(prefix+msgFmt, args...)
 }
 
 // LogCompletedAction calls logger.Success with appropriate prefix
-func LogCompletedAction(dryRun bool, msgFmt string, args ...interface{}) {
+func LogCompletedAction(plan bool, msgFmt string, args ...interface{}) {
 	prefix := ""
-	if dryRun {
-		prefix = "(dry-run) would have "
+	if plan {
+		prefix = "(plan) would have "
 	}
 	logger.Success(prefix+msgFmt, args...)
+}
+
+// LogPlanModeWarning will log a message to inform user that they are in plan-mode
+func LogPlanModeWarning(plan bool) {
+	if plan {
+		logger.Warning("no changes were applied, run again with '--approve' to apply the changes")
+	}
+}
+
+// AddApproveFlag adds common `--approve` flag
+func AddApproveFlag(plan *bool, cmd *cobra.Command, fs *pflag.FlagSet) {
+	fs.BoolVar(plan, "dry-run", *plan, "")
+	fs.MarkDeprecated("dry-run", "see --aprove")
+
+	approve := fs.Bool("approve", *plan, "Apply the changes")
+	// TODO: like this we overwrite previously set cmd.PreRun callback
+	cmd.PreRun = func(cmd *cobra.Command, args []string) {
+		if cmd.Flag("approve").Changed {
+			*plan = !*approve
+		}
+	}
 }
 
 // GetNameArg tests to ensure there is only 1 name argument

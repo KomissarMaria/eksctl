@@ -226,7 +226,7 @@ func (f *NodeGroupFilter) LogInfo(nodeGroups []*api.NodeGroup) {
 		logMsg(included, "included")
 	}
 	if f.hasExcludeRules() {
-		logger.Info("include rules: %s", f.describeExcludeRules())
+		logger.Info("exclude rules: %s", f.describeExcludeRules())
 		if excluded.Len() == 0 {
 			logger.Info("no nogroups were excluded by the filter")
 		}
